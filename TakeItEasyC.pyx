@@ -72,53 +72,6 @@ cdef bool all_equal(int array[], int array_size, int value):
     return True
 
 
-cdef class BatchedTakeItEasy:
-    def __cinit__(self, int n_games, seed=None):
-        if seed is None:
-            seed = time(NULL)
-        self.games = [TakeItEasy(i * seed) for i in range(n_games)]
-
-    def all_next_states(self, int batch_size):
-
-        cdef const int step = self.games[0].step_
-        cdef const int n_empty_tiles = 19 - step
-        cdef const int n_remaining_pieces = 27 - step
-        cdef int i, j, k
-
-        cdef np.float32_t [:, :, ::1] states_view
-        cdef np.float32_t [:, ::1] rewards_view
-
-        for i in range(0, len(self.games), batch_size):
-            g = self.games[i*batch_size:(i+1)*batch_size]
-            states = np.zeros((len(g), n_empty_tiles, state_size), dtype=np.float32)
-            rewards = np.empty((len(g), n_empty_tiles), dtype=np.float32)
-            states_view = states
-            rewards_view = rewards
-            for j in prange(len(g)):
-                for n in range(n_remaining_pieces):
-                    g[j].swap_current_piece_with_(step + n)
-                    k = 0
-                    for m in range(19):
-                        if g[j].board_[m] != -1:
-                            continue
-                        k += 1
-                        rewards_view[j, k] = g[j].place_(m)
-                        g[j].encode_(states_view[j, k])
-                    g[j].swap_current_piece_with_(step + n)
-            yield torch.from_numpy(states), torch.from_numpy(rewards)
-
-    def place(self, np.int64 [:] actions):
-        assert len(actions) == len(self.games)
-        for i in prange(len(self.games)):
-            self.games[i].place_(actions[i])
-
-    def reset(self):
-        for i in prange(len(self.games)):
-            self.games[i].reset_()
-
-
-
-
 cdef class TakeItEasy:
 
     cdef int board_[19]
@@ -295,7 +248,6 @@ cdef class TakeItEasy:
         state = np.zeros(state_size, dtype=np.float32)
         self.encode_(state)
         return torch.from_numpy(state).unsqueeze_(0)
-
 
     def __getstate__(self):
         return self.board_, self.subset_, self.step_, self.last_positions_

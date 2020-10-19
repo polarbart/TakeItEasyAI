@@ -1,7 +1,7 @@
 from tkinter import *
 import numpy as np
 import torch
-from Trainer import Trainer, Network, DenseNetwork
+from TrainerBatched import Trainer, Network, DenseNetwork
 from TakeItEasy import pieces as piecesnd
 import matplotlib.pyplot as plt
 
@@ -244,7 +244,7 @@ class TakeItEasyGui:
 
     def render(self):
         self.canvas.delete('all')
-        print('rendering')
+        # print('rendering')
 
         for i, h in enumerate(self.board):
             h.piece = self.game.get_piece_at(i)
@@ -268,9 +268,9 @@ class TakeItEasyGui:
 if __name__ == '__main__':
     # net = Trainer.load('trainer_512').net
     # net = Trainer.load('trainer_4096_dense').net, seed 3084, step 4 (9.2.4) auf stelle 18, 9.6.3 auf 16 gut? besser auf 0?
-    net = Trainer.load('trainer_4096').net
+    net = Trainer.load('trainer_batched_16384_dense').net
     r = TakeItEasyGui(
-        TakeItEasy(0),  # 3084, 206
+        TakeItEasy(123),  # 3084, 206
         net,
         radius=70
     )

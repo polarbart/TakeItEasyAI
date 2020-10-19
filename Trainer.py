@@ -143,9 +143,9 @@ class Trainer:
             for step in range(19):
 
                 # we do not need the explicit value distribution of the first state
-                # remaining_pieces = (27 - step) if step > 0 else 1
+                remaining_pieces = (27 - step) if step > 0 else 1
                 # remaining_pieces = (27 - step) if step > 0 and step >= 19 - self.iteration else 1
-                remaining_pieces = 1
+                # remaining_pieces = 1
                 states1 = torch.empty((remaining_pieces, len(empty_tiles), self.state_size), dtype=torch.float)
                 rewards = torch.empty((remaining_pieces, len(empty_tiles)), dtype=torch.float)
 
@@ -175,7 +175,7 @@ class Trainer:
                 argmax = expected_future_rewards.argmax(dim=1)
 
                 # we do not need the value distribution of the first state
-                if step > 0 and step >= 19 - self.iteration:  # step > 0
+                if step > 0:  # step > 0
                     # compute the target distribution
                     r = rewards.gather(1, argmax.unsqueeze(1)).squeeze(1)
                     d1 = qd1.gather(1, argmax.view(-1, 1, 1).expand(remaining_pieces, 1, self.n_atoms)).squeeze(1)
@@ -262,8 +262,8 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    load = True
-    save_name = 'trainer_16384_dense_no_explicit_E'
+    load = False
+    save_name = 'trainer_test'
     # print(Trainer.load(save_name).validation_scores); exit()
     if load:
         t = Trainer.load(save_name)
@@ -281,5 +281,5 @@ if __name__ == '__main__':
         # batch normalization
         # Fast as Adam & as Good as SGD
         # amsgrad
-        t = Trainer(lr=3e-4, epsilon=.5, hidden_neurons=512, n_games=16384, n_epochs=16, epsilon_decay=.98, lr_decay=.99)  # 1024
+        t = Trainer(lr=3e-4, epsilon=.5, hidden_neurons=512, n_games=4096, n_epochs=16, epsilon_decay=.98, lr_decay=.99)  # 1024
     t.train(validate_every=5, save_name=save_name)
