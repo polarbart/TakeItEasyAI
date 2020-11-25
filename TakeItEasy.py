@@ -124,7 +124,7 @@ class TakeItEasy:
         self.last_positions[self.step] = pos
         self.board[pos] = self.subset[self.step]
         self.step += 1
-        return self._score_change(pos), self.step == 19
+        return self._score_change(pos)
 
     def undo(self):
         if self.step == 0:
@@ -134,37 +134,16 @@ class TakeItEasy:
 
     def encode(self):
 
-        state1 = torch.zeros((3, 5, 5), dtype=torch.bool)
-        state2 = torch.zeros((19, 3, 3), dtype=torch.bool)
-        state3 = torch.zeros((27,), dtype=torch.bool)
-        for i in range(3):
-            for j in range(5):
-                l = lines[i][j]
-                ps = self.board[l]
-                ps = ps[ps != -1]
-                if len(ps) == 0:
-                    continue
-                if np.all(pieces[ps][:, i] == pieces[ps[0]][i]):
-                    if len(ps) == len(l):
-                        state1[i][j][3] = True
-                    else:
-                        state1[i][j][(pieces[ps[0]][i] - 1) // 3] = True
-                else:
-                    state1[i][j][4] = True
+        state = np.zeros((19, 3, 3), dtype=np.bool)
 
         for i in range(19):
             if self.board[i] != -1:
                 h = pieces[self.board[i]]
-                state2[i][0][(h[0] - 1) // 4] = True
-                state2[i][1][0 if h[1] == 2 else (h[1] - 5)] = True
-                state2[i][2][2 if h[2] == 8 else (h[2] - 3)] = True
-                state3[self.board[i]] = True
+                state[i][0][(h[0] - 1) // 4] = True
+                state[i][1][0 if h[1] == 2 else (h[1] - 5)] = True
+                state[i][2][2 if h[2] == 8 else (h[2] - 3)] = True
 
-        return torch.cat((
-            state1.flatten(),
-            state2.flatten(),
-            state3.flatten()
-        )).unsqueeze_(0)
+        return state
 
     def __getstate__(self):
         return self.board, self.subset, self.step, self.last_positions

@@ -1,0 +1,13 @@
+ 
+\mathbb{Z}((s, p))
+
+\mathbb{Z}^\pi(s)
+
+\mathbb{Z}_\theta(s)
+
+\mathbb{Z}(s) = \mathbb{E}_{p, s', r}[r + \mathbb{Z}(s') \text{  } | \text{  } a = \underset{a'}{\mathrm{argmax}} \text{ } \mathbb{E}_{s'', r''}[\mathbb{Z}(s'') | p]]
+
+\pi((s, p)) = \underset{a}{\mathrm{argmax}} \text{ } \left(r + \mathbb{E}[\mathbb{Z}(s')]\right)
+
+p(s', r | s, p, a)
+

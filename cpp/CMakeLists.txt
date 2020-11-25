@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.10)
 project(TakeItEasyC)
 
 find_package(Git QUIET)
@@ -18,7 +18,7 @@ if(GIT_FOUND AND EXISTS "../.git")
 endif()
 
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/lib/pybind11/CMakeLists.txt")
-    message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+    message(FATAL_ERROR "pybind11 has to be cloned into lib/pybind11")
 endif()
 
 find_package(OpenMP)
@@ -29,5 +29,5 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 add_subdirectory(lib/pybind11)
 
-pybind11_add_module(TakeItEasyC Bindings.cpp TakeItEasy.cpp)
+pybind11_add_module(TakeItEasyC Bindings.cpp TakeItEasy.cpp BatchedTakeItEasy.cpp)
 target_link_libraries(TakeItEasyC PUBLIC OpenMP::OpenMP_CXX)
