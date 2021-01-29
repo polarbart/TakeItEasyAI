@@ -11,9 +11,9 @@ from time import time
 import sys
 
 try:
-    from cpp.build.Release.TakeItEasyC import BatchedTakeItEasy
+    from cpp.build.TakeItEasyC import BatchedTakeItEasy
 except ImportError:
-    raise RuntimeError("you need to compile the TakeItEasy C extension")
+    raise ImportError("You need to compile the TakeItEasy C++ implementation as described in the readme")
 
 
 class CustomDataLoader:

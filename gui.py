@@ -1,19 +1,47 @@
 from tkinter import *
 import numpy as np
 import torch
-from Network import Network
+from network import Network
 from TakeItEasy import pieces as piecesnd
 import matplotlib.pyplot as plt
+import os
+from os.path import join
+from datetime import datetime
 
 pieces = piecesnd.tolist()
 try:
-    from cpp.build.Release.TakeItEasyC import TakeItEasy
+    from cpp.bin.TakeItEasyC import TakeItEasy
 except ImportError:
-    try:
-        from cpp.build.TakeItEasyC import TakeItEasy
-    except ImportError:
-        print('Using the TakeItEasy python implementation!')
-        from TakeItEasy import TakeItEasy
+    print('Using the TakeItEasy python implementation!')
+    from TakeItEasy import TakeItEasy
+
+
+class GameLogger:
+    def __init__(self, path):
+        assert path is not None
+        os.makedirs(path, exist_ok=True)
+        self.path = path
+        self.file_name = None
+        self.data = None
+        self.reset()
+
+    def save(self):
+        with open(self.file_name, 'w+') as f:
+            for d in self.data:
+                f.write(', '.join(map(str, d)) + '\n')
+
+    def place(self, hexagon, pos):
+        self.data.append((hexagon, pos))
+        self.save()
+
+    def undo(self):
+        del self.data[-1]
+        self.save()
+
+    def reset(self):
+        self.file_name = join(self.path, f'{len(os.listdir(self.path))}_'
+                                         f'{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.tie')
+        self.data = []
 
 
 class Hexagon:
@@ -101,15 +129,6 @@ class Hexagon:
 
 
 class TakeItEasyGui:
-    line_colors = ['gray50',
-                   'LightPink1',
-                   'maroon3',
-                   'DodgerBlue2',
-                   'SteelBlue4',
-                   'red2',
-                   'chartreuse3',
-                   'dark orange',
-                   'yellow2']
 
     remaining_pieces_order = [3, 1, 4, 14, 9, 13, 16, 20, 21, 25, 0, 5, 6, 7, 11, 12, 17, 15, 10, 19, 23, 24, 26, 18, 22, 8, 2]
 
@@ -151,11 +170,12 @@ class TakeItEasyGui:
 
         return board, selected_piece, all_pieces
 
-    def __init__(self, game, net, radius=70):
+    def __init__(self, game, net, radius=70, game_logger_path=None):
         self.radius = radius
         self.fontsize = round(radius / 70 * 20)
         self.game = game
         self.state_size = 19*3*3
+        self.game_logger = GameLogger(game_logger_path) if game_logger_path is not None else None
         self.root = Tk()
         self.root.configure(background='white')
         self.canvas = Canvas(self.root, width=23*self.radius, height=13*np.sqrt(3)/2*self.radius)
@@ -171,7 +191,7 @@ class TakeItEasyGui:
         Button(self.root, text='undo', command=self.undo).pack(side=RIGHT)
         Button(self.root, text='reset', command=self.reset).pack(side=RIGHT)
         self.board, self.selected_piece, self.all_pieces = self._create_board_and_pieces(self.radius)
-        self.net = net.cpu()
+        self.net = net
         self.value_distributions = {}
         self.next_action = -1
         self.reset()
@@ -183,6 +203,8 @@ class TakeItEasyGui:
         self.compute_expected_values()
         self.render()
         self.bplace.configure(state='normal')
+        if self.game_logger is not None:
+            self.game_logger.undo()
 
     def click(self, e):
         for i, h in enumerate(self.board):
@@ -237,7 +259,11 @@ class TakeItEasyGui:
     def place(self, action=None):
         if action is not None and action not in self.game.empty_tiles:
             return
-        self.game.place(self.next_action if action is None else action)
+        if action is None:
+            action = self.next_action
+        if self.game_logger is not None:
+            self.game_logger.place(action, self.game.next_piece)
+        self.game.place(action)
         if self.game.step == 19:
             self.bplace.configure(state='disabled')
         else:
@@ -249,6 +275,8 @@ class TakeItEasyGui:
         self.compute_expected_values()
         self.bplace.configure(state='normal')
         self.render()
+        if self.game_logger is not None:
+            self.game_logger.reset()
 
     def render(self):
         self.canvas.delete('all')
@@ -274,13 +302,12 @@ class TakeItEasyGui:
 
 
 if __name__ == '__main__':
-    # net = Trainer.load('trainer_512').net
-    # net = Trainer.load('trainer_4096_dense').net, seed 3084, step 4 (9.2.4) auf stelle 18, 9.6.3 auf 16 gut? besser auf 0?
     net = Network(19*3*3, 100, 2048)
-    net.load_state_dict(torch.load('nets/0'))
+    net.load_state_dict(torch.load('qr_network', map_location='cpu'))
     r = TakeItEasyGui(
-        TakeItEasy(1907),
+        TakeItEasy(),
         net,
-        radius=70
+        radius=70,
+        game_logger_path='game_logs'
     )
     mainloop()

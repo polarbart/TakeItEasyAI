@@ -7,7 +7,9 @@
 
 \mathbb{Z}(s) = \mathbb{E}_{p, s', r}[r + \mathbb{Z}(s') \text{  } | \text{  } a = \underset{a'}{\mathrm{argmax}} \text{ } \mathbb{E}_{s'', r''}[\mathbb{Z}(s'') | p]]
 
-\pi((s, p)) = \underset{a}{\mathrm{argmax}} \text{ } \left(r + \mathbb{E}[\mathbb{Z}(s')]\right)
+\pi(s, p) = \underset{a}{\mathrm{argmax}} \text{ } \left(r + \mathbb{E}[\mathbb{Z}^\pi(s')]\right)
+
+\mathbb{Z}(s) \sim \mathbb{E}_{p}\left[r + \mathbb{Z}(s') | a = \pi(s, p)\right]
 
 p(s', r | s, p, a)
 

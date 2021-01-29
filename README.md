@@ -13,12 +13,13 @@
 ## Game description
 Take it Easy is an abstract strategy board game for one to infinite players/AI's. 
 
-Each player receives 27 hexagonal pieces and a board on which the pieces can be placed. 
-Each piece has three lines on it, associated with a number from 1 to 9.
+Each player receives 27 hexagonal **pieces** and a **board**. 
+The board has 19 hexagonal **tiles** on which the pieces can be placed. 
+Each piece has three lines on it, associated with a **number** from 1 to 9.
 
-The game is played for 19 steps. For each step one player draws a tile randomly which every player places on their board.
-In the end, each player receives points for each line they have completed (length of the line times the number associated with the line).
-The player with the highest number of points wins the game. 
+The game is played for 19 **steps**. For each step one player draws a piece randomly which every player places on their board.
+In the end, each player receives points for each **line** they have completed (length of the line times the number associated with the line).
+At the end, the player with the highest number of points wins the game. 
 
 ![Real life image of Take it Easy](images/rl.jpg)
 
@@ -42,7 +43,7 @@ In order to try out this AI the following requirements need to be met:
 ```
 python >= 3.5
 numpy
-torch
+pytorch
 tqdm
 tkinter
 matplotlib
@@ -58,8 +59,10 @@ To try out the AI run [gui.py](gui.py):
 ```
 python gui.py
 ```
+If the gui is to large or to small you may adjust its size with the parameter `radius`.
+
 In order to train the model by yourself, you first have to compile the C++ implementation of TakeItEasy 
-which is roughly a gazillion times faster than the python implementation and therefore essential for training:
+which is roughly a gazillion times faster compared to the python implementation and therefore essential for training:
 ```
 cd cpp
 mkdir build
@@ -80,7 +83,7 @@ depending on your amount of VRAM. I trained it on a NVIDIA Tesla V100 (16 GB VRA
  - The maximal number of points a player can receive is 307
  <!--- There are `27 choose 19 = 2,220,075` different final board configurations--->
  - There are `27*26* ... *8 = 270061246290137702400000 = 2.7e+23` possible final board configurations
- - Every direction is associated with three numbers
+ - Every **direction** is associated with three numbers
    - The vertical line has the numbers 1, 5, and 9
    - The line from top left to bottom right has the numbers 3, 4, and 8
    - The line from top right to bottom left has the numbers 2, 6, and 7
@@ -92,14 +95,14 @@ This AI is based on reinforcement learning i.e. a policy
 <img src="images/formulas/psp.png"/> 
 is learned that maximizes the points the player will receive.
 <img src="images/formulas/s.png"/> is the current configuration of the board and
-<img src="images/formulas/p.png"/> is the piece that should be placed on the board,
+<img src="images/formulas/p.png"/> is the piece that should be placed on the board.
 
 In order to find the policy, a value based distributional approach is used, similar to [1]. 
 I. e. a neural network 
 <img src="images/formulas/Zts.png"> 
 predicts the distribution of the random variable 
 <img src="images/formulas/Zps.png"/> 
-which represents the points the player will receive if they are in the state  
+which represents the points a player will receive if they are in the state  
 <img src="images/formulas/s.png"/> 
 and they follow the policy <img src="images/formulas/psp.png"/> .
 
@@ -118,7 +121,7 @@ The network can be updated using a distributional version of the bellman equatio
 
 <div align="center"><img src="images/formulas/dist_bellman.png"/></div>
 
-Note that <img src="images/formulas/p.png"/> is a random variable in this case. 
+Note that in this case <img src="images/formulas/p.png"/> is a random variable. 
 <img src="images/formulas/p.png"/> is also the only source of randomness. 
 
 The configuration of the board (i. e. the state <img src="images/formulas/s.png"/>) is encoded in a 19x3x3 vector 
@@ -128,6 +131,8 @@ the second dimension identifies the direction and the third dimension identifies
 The network is a 4-layer fully connected neural network with 2048, 1024, and 512 hidden neurons and LeakyReLU activation functions. 
 It takes the encoded board configuration as input and outputs a vector with 100 values representing the different quantiles 
 (see [1] for more information on the encoding of the distribution).
+
+For training, first a dataset comprised of 16384 games is created on which the network is trained for 8 epochs. This is repeated 150 times.
 
 # Results 
 

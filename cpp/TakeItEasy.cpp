@@ -150,6 +150,6 @@ void TakeItEasy::encode(std::int8_t* buf) const {
     for (std::int8_t i = 0; i < 19; ++i)
         for (std::int8_t j = 0; j < 3; ++j)
             for (std::int8_t k = 0; k < 3; ++k)
-                state2[i][j][k] = 1. * (numbers_on_pieces[board[i]][j] == numbers_for_dirs[j][k]);
+                state2[i][j][k] = numbers_on_pieces[board[i]][j] == numbers_for_dirs[j][k];
 }
 

@@ -1,18 +1,15 @@
 import torch
 import numpy as np
-from Network import Network
+from network import Network
 from torch.nn.functional import smooth_l1_loss
 import pickle
 from tqdm import tqdm
 import sys
 
 try:
-    from cpp.build.Release.TakeItEasyC import BatchedTakeItEasy, TakeItEasy
+    from cpp.build.TakeItEasyC import BatchedTakeItEasy, TakeItEasy
 except ImportError:
-    try:
-        from cpp.build.TakeItEasyC import BatchedTakeItEasy, TakeItEasy
-    except ImportError:
-        raise ImportError("You need to compile the TakeItEasy C++ implementation as described in the readme")
+    raise ImportError("You need to compile the TakeItEasy C++ implementation as described in the readme")
 
 
 class Buffer:
@@ -312,8 +309,8 @@ if __name__ == '__main__':
             batch_size_games=1024,
             n_validation_games=16384,
             n_epochs=8,
-            epsilon_decay=.85,
-            lr_decay=.965,
+            epsilon_decay=.95,
+            lr_decay=.97,
             n_atoms=100,
             n_iterations=150,
             device='cuda',
