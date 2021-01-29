@@ -143,7 +143,7 @@ class TakeItEasy:
                 state[i][1][0 if h[1] == 2 else (h[1] - 5)] = True
                 state[i][2][2 if h[2] == 8 else (h[2] - 3)] = True
 
-        return state
+        return state.flatten()
 
     def __getstate__(self):
         return self.board, self.subset, self.step, self.last_positions
