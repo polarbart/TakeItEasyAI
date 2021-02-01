@@ -15,7 +15,7 @@ The game is played for 19 **steps**. For each step a piece is randomly selected,
 In the end, each player receives points for each **line** they have completed (length of the line times the number associated with the line).
 The player with the highest number of points wins the game. 
 
-![Real life image of Take it Easy](images/rl.jpg)
+![Real life image of Take it Easy](images/take_it_easy.jpg)
 
 ### Example
 The example below shows exemplarily how a game could go 
