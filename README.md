@@ -87,7 +87,7 @@ the histogram suggests that the received points also includes a significant amou
 
 <div align="center"><img src="images/point_hist.png" width="80%"> </div>
 
-For comparison, me and [Quickblink](https://github.com/Quickblink) played 10 
+For comparison, [Quickblink](https://github.com/Quickblink) and I played 10 
 games with the AI in order to figure out how well it performs. We both consider ourselves as experienced Take It Easy players.
 
 The table below shows the received points for the 10 games. 
