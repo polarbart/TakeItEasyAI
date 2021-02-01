@@ -1,7 +1,3 @@
-# TODO
-
- - Terminology? and spaces to id
- 
 # Take It Easy AI
 
  - Based on distributional reinforcement learning [1]
