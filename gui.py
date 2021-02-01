@@ -2,7 +2,7 @@ from tkinter import *
 import numpy as np
 import torch
 from network import Network
-from TakeItEasy import pieces as piecesnd
+from takeiteasy import pieces as piecesnd
 import matplotlib.pyplot as plt
 import os
 from os.path import join
@@ -13,7 +13,7 @@ try:
     from cpp.bin.TakeItEasyC import TakeItEasy
 except ImportError:
     print('Using the TakeItEasy python implementation!')
-    from TakeItEasy import TakeItEasy
+    from takeiteasy import TakeItEasy
 
 
 class GameLogger:
@@ -31,6 +31,15 @@ class GameLogger:
                 f.write(', '.join(map(str, d)) + '\n')
 
     def place(self, hexagon, pos):
+        """
+        The spaces are numbered from top to bottom, from left to right
+            3  7 12
+         0  4  8 13 16
+         1  5  9 14 17
+         2  6 10 15 18
+              11
+        """
+
         self.data.append((hexagon, pos))
         self.save()
 
@@ -234,10 +243,10 @@ class TakeItEasyGui:
                 break
 
     def compute_expected_values(self):
-        empty_tiles = self.game.empty_tiles
-        states = torch.empty((len(empty_tiles), self.state_size), dtype=torch.float)
-        rewards = torch.empty((len(empty_tiles),), dtype=torch.float)
-        for i, a in enumerate(empty_tiles):
+        empty_spaces = self.game.empty_spaces
+        states = torch.empty((len(empty_spaces), self.state_size), dtype=torch.float)
+        rewards = torch.empty((len(empty_spaces),), dtype=torch.float)
+        for i, a in enumerate(empty_spaces):
             rewards[i] = self.game.place(a)
             states[i] = torch.from_numpy(self.game.encode())
             self.game.undo()
@@ -248,16 +257,16 @@ class TakeItEasyGui:
             q = rewards + qd.mean(1)
 
         self.value_distributions.clear()
-        for i, d, r in zip(empty_tiles, qd, rewards):
+        for i, d, r in zip(empty_spaces, qd, rewards):
             self.value_distributions[i] = d, r
 
-        self.next_action = empty_tiles[q.argmax()]
+        self.next_action = empty_spaces[q.argmax()]
         value = self.game.compute_score()
-        for i, e in zip(empty_tiles, q):
+        for i, e in zip(empty_spaces, q):
             self.board[i].expected_value = float(e) + value
 
     def place(self, action=None):
-        if action is not None and action not in self.game.empty_tiles:
+        if action is not None and action not in self.game.empty_spaces:
             return
         if action is None:
             action = self.next_action
@@ -305,7 +314,7 @@ if __name__ == '__main__':
     net = Network(19*3*3, 100, 2048)
     net.load_state_dict(torch.load('qr_network', map_location='cpu'))
     r = TakeItEasyGui(
-        TakeItEasy(),
+        TakeItEasy(seed=None),
         net,
         radius=70,
         game_logger_path='game_logs'

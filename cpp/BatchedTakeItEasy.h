@@ -25,8 +25,8 @@ public:
 
 private:
 
-    void deltaEncode(std::int32_t g, std::int8_t* encoding, std::int8_t tile) const;
-    void deltaEncode(std::int32_t g, std::int8_t* src, std::int8_t* dst, std::int8_t tile) const;
+    void deltaEncode(std::int32_t g, std::int8_t* encoding, std::int8_t space) const;
+    void deltaEncode(std::int32_t g, std::int8_t* src, std::int8_t* dst, std::int8_t space) const;
 
     std::vector<TakeItEasy> games;
     std::int8_t* previousEncodings = nullptr;

@@ -7,7 +7,7 @@ from tqdm import tqdm
 import sys
 
 try:
-    from cpp.build.TakeItEasyC import BatchedTakeItEasy, TakeItEasy
+    from cpp.bin.TakeItEasyC import BatchedTakeItEasy, TakeItEasy
 except ImportError:
     raise ImportError("You need to compile the TakeItEasy C++ implementation as described in the readme")
 
@@ -152,33 +152,33 @@ class Trainer:
                   states.shape = batch_size_games x state_size
               
                   if step > 0:
-                    compute_encodings returns all possible next states (iterating over empty tiles and remaining pieces)
+                    compute_encodings returns all possible next states (iterating over empty spaces and remaining pieces)
                     states1.shape = batch_size_games x (27 - step) x (19 - step) x state_size
                     rewards.shape = batch_size_games x (27 - step) x (19 - step)
                   elif step == 0:
-                    compute_encodings returns all possible next states (just iterating over empty tiles)
+                    compute_encodings returns all possible next states (just iterating over empty spaces)
                     states1.shape = batch_size_games x 1 x (19 - step) x state_size
                     rewards.shape = batch_size_games x 1 x (19 - step)
               
-                  empty_tiles.shape = batch_size_games x (19 - step)
+                  empty_spaces.shape = batch_size_games x (19 - step)
               
                   if step == 0 then states is None
                   if step == 18 then states1 is None
                 '''
-                states, states1, rewards, empty_tiles = self.games.compute_encodings(step > 0)
+                states, states1, rewards, empty_spaces = self.games.compute_encodings(step > 0)
                 states, states1, rewards = to_torch_tensor(states), to_torch_tensor(states1), to_torch_tensor(rewards)
 
-                n_games, n_remaining_pieces, n_empty_tiles = rewards.shape
+                n_games, n_remaining_pieces, n_empty_spaces = rewards.shape
 
                 # compute the value distribution of all next states
                 if step < 18 and self.iteration > 1:
                     # only use the network if its output is reasonable
-                    qd1 = self.net(states1.float())  # q-distribution_(t+1), shape: n_games, n_remaining_pieces, n_empty_tiles, self.n_atoms
+                    qd1 = self.net(states1.float())  # q-distribution_(t+1), shape: n_games, n_remaining_pieces, n_empty_spaces, self.n_atoms
                 else:
                     # otherwise assume that the agent will get no future reward
-                    qd1 = torch.zeros((n_games, n_remaining_pieces, n_empty_tiles, self.n_atoms), dtype=torch.float, device=self.device)
+                    qd1 = torch.zeros((n_games, n_remaining_pieces, n_empty_spaces, self.n_atoms), dtype=torch.float, device=self.device)
 
-                expected_future_rewards = rewards + qd1.mean(dim=3)  # n_games, n_remaining_pieces, n_empty_tiles
+                expected_future_rewards = rewards + qd1.mean(dim=3)  # n_games, n_remaining_pieces, n_empty_spaces
                 best_action = expected_future_rewards.argmax(dim=2)  # n_games, n_remaining_pieces
 
                 # we do not need the value distribution of the initial state
@@ -191,10 +191,10 @@ class Trainer:
 
                 actions = np.where(
                     np.random.ranf(n_games) < self.epsilon,
-                    np.random.randint(0, n_empty_tiles, size=(n_games,), dtype=np.int8),
+                    np.random.randint(0, n_empty_spaces, size=(n_games,), dtype=np.int8),
                     best_action[:, 0].cpu().numpy().astype(np.int8)
                 )
-                actions = np.take_along_axis(empty_tiles, actions.reshape(n_games, 1), axis=1).reshape(n_games)
+                actions = np.take_along_axis(empty_spaces, actions.reshape(n_games, 1), axis=1).reshape(n_games)
                 self.games.place(actions)
 
             scores += self.games.compute_scores().tolist()
@@ -216,14 +216,14 @@ class Trainer:
             self.games.reset()
 
             for step in range(18):
-                _, s1, r, empty_tiles = self.games.compute_encodings(False)
+                _, s1, r, empty_spaces = self.games.compute_encodings(False)
                 s1, r = to_torch_tensor(s1), to_torch_tensor(r)
-                e = r.squeeze(1) + self.net.expected_value(s1.squeeze(1))  # n_games, n_empty_tiles
-                actions = np.take_along_axis(empty_tiles, e.argmax(dim=1, keepdim=True).cpu().numpy(), axis=1).squeeze(1)
+                e = r.squeeze(1) + self.net.expected_value(s1.squeeze(1))  # n_games, n_empty_spaces
+                actions = np.take_along_axis(empty_spaces, e.argmax(dim=1, keepdim=True).cpu().numpy(), axis=1).squeeze(1)
                 self.games.place(actions)
 
-            *_, empty_tiles = self.games.compute_encodings(False)
-            self.games.place(empty_tiles.squeeze(1))
+            *_, empty_spaces = self.games.compute_encodings(False)
+            self.games.place(empty_spaces.squeeze(1))
 
             rewards += self.games.compute_scores().tolist()
 

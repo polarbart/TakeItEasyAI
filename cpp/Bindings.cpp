@@ -11,7 +11,7 @@ namespace py = pybind11;
 
 typedef std::array<std::int8_t, 3> Piece;
 
-std::vector<std::uint8_t> empty_tiles(const TakeItEasy &t) {
+std::vector<std::uint8_t> empty_spaces(const TakeItEasy &t) {
     std::vector<std::uint8_t> ret;
     for (std::int8_t i = 0; i < 19; ++i)
         if (t.board[i] == INVALID_PIECE)
@@ -82,7 +82,7 @@ PYBIND11_MODULE(TakeItEasyC, m) {
     tie.def("swap_current_piece_with", &TakeItEasy::swapCurrentPieceWith);
 
     tie.def_readonly("step", &TakeItEasy::step);
-    tie.def_property_readonly("empty_tiles", &empty_tiles);
+    tie.def_property_readonly("empty_spaces", &empty_spaces);
     tie.def_property_readonly("remaining_pieces", &remaining_pieces);
     tie.def("get_piece_at", &get_piece_at);
     tie.def_property_readonly("next_piece", &next_piece);

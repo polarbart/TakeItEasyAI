@@ -41,7 +41,7 @@ BatchedTakeItEasy::~BatchedTakeItEasy() {
 py::tuple BatchedTakeItEasy::computeEncodings(const bool iterOverRemainingPieces) {
 
     const std::int32_t step = games[0].step;
-    const std::int32_t nEmptyTiles = 19 - step;
+    const std::int32_t nEmptySpaces = 19 - step;
     const std::int32_t nRemainingPieces = iterOverRemainingPieces ? (27 - step) : 1;
 
     // prepare arrays
@@ -52,18 +52,18 @@ py::tuple BatchedTakeItEasy::computeEncodings(const bool iterOverRemainingPieces
     if (step > 0)
         states = new std::int8_t[nGames * STATE_SIZE];
     if (step < 19)
-        states1 = new std::int8_t[nGames * nRemainingPieces * nEmptyTiles * STATE_SIZE];
-    auto *rewards = new std::int8_t[nGames * nRemainingPieces * nEmptyTiles];
-    auto *emptyTiles = new std::int8_t[nGames * nEmptyTiles];
+        states1 = new std::int8_t[nGames * nRemainingPieces * nEmptySpaces * STATE_SIZE];
+    auto *rewards = new std::int8_t[nGames * nRemainingPieces * nEmptySpaces];
+    auto *emptySpaces = new std::int8_t[nGames * nEmptySpaces];
 
     const std::int32_t states1Strides[3] = {
-            nRemainingPieces * nEmptyTiles * STATE_SIZE,
-            nEmptyTiles * STATE_SIZE,
+            nRemainingPieces * nEmptySpaces * STATE_SIZE,
+            nEmptySpaces * STATE_SIZE,
             STATE_SIZE
     };
     const std::int32_t rewardsStrides[2] = {
-            nRemainingPieces * nEmptyTiles,
-            nEmptyTiles
+            nRemainingPieces * nEmptySpaces,
+            nEmptySpaces
     };
 
     // iterate over games
@@ -79,23 +79,23 @@ py::tuple BatchedTakeItEasy::computeEncodings(const bool iterOverRemainingPieces
         if (step < 19)
             cStates1 = &states1[i * states1Strides[0]];
         auto *cRewards = &rewards[i * rewardsStrides[0]];
-        auto *cEmptyTiles = &emptyTiles[i * nEmptyTiles];
+        auto *cEmptySpaces = &emptySpaces[i * nEmptySpaces];
 
-        // get the tiles that are still empty i. e. games[i].board[m] == INVALID_PIECE
+        // get the spaces that are still empty i. e. games[i].board[m] == INVALID_PIECE
         for (std::int8_t m = 0, n = 0; m < 19; ++m) {
             if (games[i].board[m] == INVALID_PIECE)
-                cEmptyTiles[n++] = m;
+                cEmptySpaces[n++] = m;
         }
 
-        // iterate over all remaining pieces and all empty tiles
+        // iterate over all remaining pieces and all empty spaces
         // save the rewards and the state encodings
         for (std::int8_t j = 0; j < nRemainingPieces; ++j) {
             games[i].swapCurrentPieceWith(step + j);
-            for (std::int8_t k = 0; k < nEmptyTiles; ++k) {
-                games[i].place(cEmptyTiles[k]);
-                cRewards[j * rewardsStrides[1] + k] = games[i].computeScoreDelta(cEmptyTiles[k]);
+            for (std::int8_t k = 0; k < nEmptySpaces; ++k) {
+                games[i].place(cEmptySpaces[k]);
+                cRewards[j * rewardsStrides[1] + k] = games[i].computeScoreDelta(cEmptySpaces[k]);
                 if (cStates1 != nullptr)
-                    deltaEncode(i, prevEnc, &cStates1[j * states1Strides[1] + k * states1Strides[2]], cEmptyTiles[k]);
+                    deltaEncode(i, prevEnc, &cStates1[j * states1Strides[1] + k * states1Strides[2]], cEmptySpaces[k]);
                 games[i].undo();
             }
             games[i].swapCurrentPieceWith(step + j);
@@ -107,24 +107,24 @@ py::tuple BatchedTakeItEasy::computeEncodings(const bool iterOverRemainingPieces
     if (states == nullptr)
         return py::make_tuple(
                 nullptr,
-                toNumpy(states1, {nGames, nRemainingPieces, nEmptyTiles, STATE_SIZE}),
-                toNumpy(rewards, {nGames, nRemainingPieces, nEmptyTiles}),
-                toNumpy(emptyTiles, {nGames, nEmptyTiles})
+                toNumpy(states1, {nGames, nRemainingPieces, nEmptySpaces, STATE_SIZE}),
+                toNumpy(rewards, {nGames, nRemainingPieces, nEmptySpaces}),
+                toNumpy(emptySpaces, {nGames, nEmptySpaces})
         );
 
     if (states1 == nullptr)
         return py::make_tuple(
                 toNumpy(states, {nGames, STATE_SIZE}),
                 nullptr,
-                toNumpy(rewards, {nGames, nRemainingPieces, nEmptyTiles}),
-                toNumpy(emptyTiles, {nGames, nEmptyTiles})
+                toNumpy(rewards, {nGames, nRemainingPieces, nEmptySpaces}),
+                toNumpy(emptySpaces, {nGames, nEmptySpaces})
         );
 
     return py::make_tuple(
             toNumpy(states, {nGames, STATE_SIZE}),
-            toNumpy(states1, {nGames, nRemainingPieces, nEmptyTiles, STATE_SIZE}),
-            toNumpy(rewards, {nGames, nRemainingPieces, nEmptyTiles}),
-            toNumpy(emptyTiles, {nGames, nEmptyTiles})
+            toNumpy(states1, {nGames, nRemainingPieces, nEmptySpaces, STATE_SIZE}),
+            toNumpy(rewards, {nGames, nRemainingPieces, nEmptySpaces}),
+            toNumpy(emptySpaces, {nGames, nEmptySpaces})
     );
 }
 
@@ -163,15 +163,15 @@ NumpyWordArray BatchedTakeItEasy::computeScores() const {
     return toNumpy(scores, {nGames});
 }
 
-void BatchedTakeItEasy::deltaEncode(std::int32_t g, std::int8_t *src, std::int8_t *dst, std::int8_t tile) const {
+void BatchedTakeItEasy::deltaEncode(std::int32_t g, std::int8_t *src, std::int8_t *dst, std::int8_t space) const {
     std::copy_n(src, STATE_SIZE, dst);
-    deltaEncode(g, dst, tile);
+    deltaEncode(g, dst, space);
 }
 
-void BatchedTakeItEasy::deltaEncode(const std::int32_t g, std::int8_t* encoding, const std::int8_t tile) const {
-    // encode the state if a piece of the tile "tile" was placed
+void BatchedTakeItEasy::deltaEncode(const std::int32_t g, std::int8_t* encoding, const std::int8_t space) const {
+    // encode the state if a piece of the space "space" was placed
     std::int8_t (&state)[19][3][3]  = *reinterpret_cast<std::int8_t(*)[19][3][3]>(encoding);
     for (std::int8_t j = 0; j < 3; ++j)
         for (std::int8_t k = 0; k < 3; ++k)
-            state[tile][j][k] = (numbers_on_pieces[games[g].board[tile]][j] == numbers_for_dirs[j][k]);
+            state[space][j][k] = (numbers_on_pieces[games[g].board[space]][j] == numbers_for_dirs[j][k]);
 }

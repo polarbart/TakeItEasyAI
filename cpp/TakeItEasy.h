@@ -6,12 +6,12 @@
 #include <optional>
 
 #define STATE_SIZE (19*3*3)
-#define INVALID_TILE 19
+#define INVALID_SPACE 19
 #define INVALID_PIECE 27
 
 extern const std::int8_t numbers_on_pieces[28][3];
-extern const std::int8_t tiles_on_lines[3][5][5];
-extern const std::int8_t lines_on_tile[19][3];
+extern const std::int8_t spaces_on_lines[3][5][5];
+extern const std::int8_t lines_on_space[19][3];
 extern const std::int8_t numbers_for_dirs[3][3];
 
 class TakeItEasy {
